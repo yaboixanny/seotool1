@@ -16,7 +16,11 @@ const discoverSitemap = async (baseUrl) => {
     const commonPaths = ['/sitemap.xml', '/sitemap_index.xml', '/wp-sitemap.xml'];
 
     try {
-        const robotsRes = await axios.get(`${baseUrl}/robots.txt`, { timeout: 5000 }).catch(() => null);
+        const robotsRes = await axios.get(`${baseUrl}/robots.txt`, {
+            timeout: 5000,
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36' }
+        }).catch(() => null);
+
         if (robotsRes && robotsRes.data) {
             const match = robotsRes.data.match(/Sitemap:\s*(https?:\/\/\S+)/i);
             if (match) return match[1];
@@ -25,7 +29,10 @@ const discoverSitemap = async (baseUrl) => {
         for (const path of commonPaths) {
             try {
                 // Using GET instead of HEAD as some servers block HEAD
-                const res = await axios.get(`${baseUrl}${path}`, { timeout: 3000, headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36' } });
+                const res = await axios.get(`${baseUrl}${path}`, {
+                    timeout: 3000,
+                    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36' }
+                });
                 if (res.status === 200) return `${baseUrl}${path}`;
             } catch (e) { }
         }
@@ -43,6 +50,10 @@ const fetchSitemap = async (url) => {
             },
             timeout: 10000
         });
+
+        if (!response.data || typeof response.data !== 'string') {
+            throw new Error('Sitemap response is empty or not text');
+        }
 
         // Sanitize XML: replace unescaped & with &amp;
         const sanitizedData = response.data.replace(/&(?!(amp|lt|gt|quot|apos);)/g, '&amp;');
@@ -68,10 +79,10 @@ app.post('/api/discover-sitemaps', async (req, res) => {
         // 1. Check robots.txt
         const robotsRes = await axios.get(`${baseUrl}/robots.txt`, {
             timeout: 5000,
-            headers: { 'User-Agent': 'Mozilla/5.0' }
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36' }
         }).catch(() => null);
 
-        if (robotsRes && robotsRes.data) {
+        if (robotsRes && robotsRes.data && typeof robotsRes.data === 'string') {
             const matches = robotsRes.data.matchAll(/Sitemap:\s*(https?:\/\/\S+)/gi);
             for (const match of matches) {
                 sitemaps.add(match[1]);
@@ -84,10 +95,10 @@ app.post('/api/discover-sitemaps', async (req, res) => {
                 const url = `${baseUrl}${path}`;
                 const res = await axios.get(url, {
                     timeout: 4000,
-                    headers: { 'User-Agent': 'Mozilla/5.0' },
-                    maxContentLength: 1000 // Just need the start
+                    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36' },
+                    maxContentLength: 10000
                 });
-                if (res.status === 200 && res.data.includes('<sitemap')) {
+                if (res.status === 200 && typeof res.data === 'string' && res.data.includes('<sitemap')) {
                     sitemaps.add(url);
                 }
             } catch (e) { }
@@ -129,28 +140,31 @@ app.post('/api/analyze-sitemap', async (req, res) => {
         if (sitemapData.sitemapindex) {
             const index = sitemapData.sitemapindex;
             const entries = Array.isArray(index.sitemap) ? index.sitemap : [index.sitemap];
-            const nestedSitemaps = entries.map(getLoc);
+            const nestedSitemaps = entries.map(getLoc).filter(l => l);
 
-            const results = await Promise.all(nestedSitemaps.slice(0, 10).map(fetchSitemap).map(p => p.catch(e => null)));
+            const results = await Promise.all(nestedSitemaps.slice(0, 15).map(fetchSitemap).map(p => p.catch(e => null)));
             results.forEach(res => {
                 if (res && res.urlset && res.urlset.url) {
                     const urlEntries = Array.isArray(res.urlset.url) ? res.urlset.url : [res.urlset.url];
-                    urls = urls.concat(urlEntries.map(getLoc));
+                    urls = urls.concat(urlEntries.map(getLoc).filter(l => l));
                 }
             });
         } else if (sitemapData.urlset && sitemapData.urlset.url) {
             const urlEntries = Array.isArray(sitemapData.urlset.url) ? sitemapData.urlset.url : [sitemapData.urlset.url];
-            urls = urls.concat(urlEntries.map(getLoc));
+            urls = urls.concat(urlEntries.map(getLoc).filter(l => l));
         }
 
         if (urls.length === 0) {
-            return res.status(404).json({ error: 'No URLs successfully extracted from sitemap. The site might be blocking our automated requests.' });
+            return res.status(404).json({ error: 'No URLs successfully extracted. The site might be blocking us or the format is unusual.' });
         }
+
+        // De-duplicate URLs
+        urls = [...new Set(urls)];
 
         res.json({ urls });
     } catch (error) {
         console.error('Analysis Error:', error);
-        res.status(500).json({ error: 'Failed to analyze sitemap: ' + (error.response?.statusText || error.message) });
+        res.status(500).json({ error: 'Failure: ' + (error.response?.statusText || error.message) });
     }
 });
 
@@ -158,6 +172,15 @@ app.post('/api/analyze-sitemap', async (req, res) => {
 if (process.env.NODE_ENV === 'production') {
     app.use(express.static('dist'));
 }
+
+// Global Error Handler to ensure we always return JSON
+app.use((err, req, res, next) => {
+    console.error('Global Error Handler:', err);
+    res.status(500).json({
+        error: 'Critical Server Error',
+        details: err.message
+    });
+});
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on port ${PORT}`);
