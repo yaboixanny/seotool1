@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sitemap Architect | SEO Intelligence Tool</title>
+    <link rel="stylesheet" href="./style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div id="app">
+        <header>
+            <div class="logo">
+                <span class="icon">🕸️</span>
+                <h1>Sitemap<span>Architect</span></h1>
+            </div>
+            <p class="subtitle">Extract site structure & keyword intelligence from competitors</p>
+        </header>
+
+        <main>
+            <section class="input-section">
+                <div class="search-container">
+                    <input type="text" id="sitemap-url" placeholder="https://competitor.com/sitemap.xml" value="">
+                    <button id="analyze-btn">Analyze Structure</button>
+                </div>
+                <p class="hint">Enter a direct sitemap URL or the homepage.</p>
+                <div style="text-align: center; margin-top: 1rem;">
+                    <a href="index.html" style="color: var(--accent-color); text-decoration: none; font-weight: 600;">←
+                        Back to Suite Hub</a>
+                </div>
+            </section>
+
+            <section id="loading" class="hidden">
+                <div class="loader"></div>
+                <p>Architecting the site map...</p>
+            </section>
+
+            <section id="results" class="hidden">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-value" id="url-count">0</span>
+                        <span class="stat-label">Total URLs</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value" id="depth-count">0</span>
+                        <span class="stat-label">Max Depth</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value" id="themes-count">0</span>
+                        <span class="stat-label">Key Themes</span>
+                    </div>
+                </div>
+
+                <div class="visual-container">
+                    <div class="tabs">
+                        <button class="active" data-tab="tree">Silo Structure</button>
+                        <button data-tab="themes">Keyword Themes</button>
+                    </div>
+
+                    <div id="tree-view" class="tab-content active">
+                        <div class="tree-root" id="sitemap-tree">
+                            <!-- Tree will be injected here -->
+                        </div>
+                    </div>
+
+                    <div id="themes-view" class="tab-content">
+                        <div class="themes-grid" id="themes-list">
+                            <!-- Themes will be injected here -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 SEO Intelligence Tools. Built with Precision.</p>
+        </footer>
+    </div>
+    <script type="module" src="./sitemap.js"></script>
+</body>
+
+</html>
