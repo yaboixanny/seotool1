@@ -40,13 +40,19 @@ async function analyzeSitemap() {
             body: JSON.stringify({ sitemapUrl: url })
         });
 
-        if (!response.ok) {
-            const errData = await response.json();
-            throw new Error(errData.error || 'Failed to analyze sitemap');
+        const text = await response.text();
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch (e) {
+            throw new Error('Server returned an invalid response. It might be blocking automated requests.');
         }
 
-        const { urls } = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to analyze sitemap');
+        }
 
+        const { urls } = data;
         processUrls(urls);
 
         loadingSection.classList.add('hidden');
