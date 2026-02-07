@@ -22,6 +22,16 @@ tabs.forEach(tab => {
     });
 });
 
+// Auto-fill and auto-analyze if URL parameter is present
+window.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const prefillUrl = urlParams.get('url');
+    if (prefillUrl) {
+        sitemapInput.value = prefillUrl;
+        analyzeSitemap();
+    }
+});
+
 async function analyzeSitemap() {
     const url = sitemapInput.value.trim();
     if (!url) {
@@ -45,7 +55,8 @@ async function analyzeSitemap() {
         try {
             data = JSON.parse(text);
         } catch (e) {
-            throw new Error('Server returned an invalid response. It might be blocking automated requests.');
+            console.error('Invalid response text:', text);
+            throw new Error(`Server returned an invalid response (not JSON). Status: ${response.status}. Snippet: ${text.substring(0, 200)}`);
         }
 
         if (!response.ok) {

@@ -29,7 +29,8 @@ async function findSitemaps() {
         try {
             data = JSON.parse(text);
         } catch (e) {
-            throw new Error('Server returned an invalid response.');
+            console.error('Invalid response text:', text);
+            throw new Error(`Server returned an invalid response (not JSON). Status: ${response.status}. Snippet: ${text.substring(0, 200)}`);
         }
 
         if (!response.ok) {
