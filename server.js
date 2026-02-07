@@ -54,6 +54,51 @@ const fetchSitemap = async (url) => {
     }
 };
 
+app.post('/api/discover-sitemaps', async (req, res) => {
+    let { baseUrl } = req.body;
+    if (!baseUrl) return res.status(400).json({ error: 'Base URL is required' });
+
+    baseUrl = baseUrl.replace(/\/$/, '');
+    if (!baseUrl.startsWith('http')) baseUrl = 'https://' + baseUrl;
+
+    const sitemaps = new Set();
+    const commonPaths = ['/sitemap.xml', '/sitemap_index.xml', '/wp-sitemap.xml', '/sitemap_pages.xml', '/sitemap_posts.xml'];
+
+    try {
+        // 1. Check robots.txt
+        const robotsRes = await axios.get(`${baseUrl}/robots.txt`, {
+            timeout: 5000,
+            headers: { 'User-Agent': 'Mozilla/5.0' }
+        }).catch(() => null);
+
+        if (robotsRes && robotsRes.data) {
+            const matches = robotsRes.data.matchAll(/Sitemap:\s*(https?:\/\/\S+)/gi);
+            for (const match of matches) {
+                sitemaps.add(match[1]);
+            }
+        }
+
+        // 2. Check common paths (in parallel)
+        await Promise.all(commonPaths.map(async (path) => {
+            try {
+                const url = `${baseUrl}${path}`;
+                const res = await axios.get(url, {
+                    timeout: 4000,
+                    headers: { 'User-Agent': 'Mozilla/5.0' },
+                    maxContentLength: 1000 // Just need the start
+                });
+                if (res.status === 200 && res.data.includes('<sitemap')) {
+                    sitemaps.add(url);
+                }
+            } catch (e) { }
+        }));
+
+        res.json({ sitemaps: Array.from(sitemaps) });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.post('/api/analyze-sitemap', async (req, res) => {
     let { sitemapUrl } = req.body;
 

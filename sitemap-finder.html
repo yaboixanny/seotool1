@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sitemap Finder | SEO Intelligence Tool</title>
+    <link rel="stylesheet" href="./style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div id="app">
+        <header>
+            <div class="logo">
+                <span class="icon">🔍</span>
+                <h1>Sitemap<span>Finder</span></h1>
+            </div>
+            <p class="subtitle">Quickly locate all possible sitemap XML paths for any domain</p>
+        </header>
+
+        <main>
+            <section class="input-section">
+                <div class="search-container">
+                    <input type="text" id="domain-url" placeholder="https://example.com" value="">
+                    <button id="find-btn">Find Sitemaps</button>
+                </div>
+                <p class="hint">Enter the homepage URL or just the domain.</p>
+                <div style="text-align: center; margin-top: 1rem;">
+                    <a href="index.html" style="color: var(--accent-color); text-decoration: none; font-weight: 600;">←
+                        Back to Suite Hub</a>
+                </div>
+            </section>
+
+            <section id="loading" class="hidden">
+                <div class="loader"></div>
+                <p>Scanning robots.txt and common paths...</p>
+            </section>
+
+            <section id="results" class="hidden">
+                <div class="visual-container">
+                    <h2 style="margin-bottom: 1.5rem; color: var(--accent-color);">Discovered Sitemap URLs</h2>
+                    <div id="sitemap-list" class="themes-grid">
+                        <!-- Sitemap links will be injected here -->
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 SEO Intelligence Tools. Built with Precision.</p>
+        </footer>
+    </div>
+    <script type="module" src="./sitemap-finder.js"></script>
+</body>
+
+</html>

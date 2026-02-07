@@ -7,6 +7,7 @@ export default defineConfig({
             input: {
                 main: resolve(__dirname, 'index.html'),
                 sitemap: resolve(__dirname, 'sitemap-architect.html'),
+                finder: resolve(__dirname, 'sitemap-finder.html'),
             },
         },
     },
