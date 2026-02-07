@@ -34,7 +34,7 @@ async function analyzeSitemap() {
     resultsSection.classList.add('hidden');
 
     try {
-        const response = await fetch('http://localhost:3001/api/analyze-sitemap', {
+        const response = await fetch('/api/analyze-sitemap', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ sitemapUrl: url })
