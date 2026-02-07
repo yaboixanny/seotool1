@@ -24,7 +24,8 @@ const discoverSitemap = async (baseUrl) => {
 
         for (const path of commonPaths) {
             try {
-                const res = await axios.head(`${baseUrl}${path}`, { timeout: 3000 });
+                // Using GET instead of HEAD as some servers block HEAD
+                const res = await axios.get(`${baseUrl}${path}`, { timeout: 3000, headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36' } });
                 if (res.status === 200) return `${baseUrl}${path}`;
             } catch (e) { }
         }
@@ -97,10 +98,14 @@ app.post('/api/analyze-sitemap', async (req, res) => {
             urls = urls.concat(urlEntries.map(getLoc));
         }
 
+        if (urls.length === 0) {
+            return res.status(404).json({ error: 'No URLs successfully extracted from sitemap. The site might be blocking our automated requests.' });
+        }
+
         res.json({ urls });
     } catch (error) {
         console.error('Analysis Error:', error);
-        res.status(500).json({ error: 'Failed to fetch or parse sitemap: ' + error.message });
+        res.status(500).json({ error: 'Failed to analyze sitemap: ' + (error.response?.statusText || error.message) });
     }
 });
 
